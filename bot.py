@@ -1,6 +1,3 @@
-
-
-
 import spacy
 from typing import Dict
 
@@ -12,16 +9,12 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import InMemoryChatMessageHistory
 
-# --------------------------------------------------
-# CONFIG
-# --------------------------------------------------
-MISTRAL_API_KEY = "41XefarZewGcSLzbHEnpsO9lrVeFDf5V"
+
+MISTRAL_API_KEY = "xxx"
 
 nlp = spacy.load("en_core_web_sm")
 
-# --------------------------------------------------
-# NLP HELPERS
-# --------------------------------------------------
+
 def extract_entity(text: str):
     doc = nlp(text)
     for ent in doc.ents:
@@ -56,9 +49,7 @@ def promote_entity_from_text(text: str):
     return None
 
 
-# --------------------------------------------------
-# SESSION STATE (SAFE)
-# --------------------------------------------------
+
 class SessionState:
     def __init__(self):
         self.history = InMemoryChatMessageHistory()
@@ -74,18 +65,13 @@ def get_session_state(session_id: str) -> SessionState:
     return store[session_id]
 
 
-# --------------------------------------------------
-# LLM
-# --------------------------------------------------
 llm = ChatMistralAI(
     model="mistral-small",
     temperature=0,
     mistral_api_key=MISTRAL_API_KEY
 )
 
-# --------------------------------------------------
-# PROMPT
-# --------------------------------------------------
+
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful factual conversational assistant."),
     MessagesPlaceholder(variable_name="history"),
@@ -94,9 +80,7 @@ prompt = ChatPromptTemplate.from_messages([
 
 chain = prompt | llm
 
-# --------------------------------------------------
-# CONVERSATION (THIS WAS MISSING ❗)
-# --------------------------------------------------
+
 conversation = RunnableWithMessageHistory(
     chain,
     lambda sid: get_session_state(sid).history,
@@ -104,18 +88,15 @@ conversation = RunnableWithMessageHistory(
     history_messages_key="history"
 )
 
-# --------------------------------------------------
-# PUBLIC API
-# --------------------------------------------------
 def ask_bot(user_query: str, session_id: str = "default") -> dict:
     state = get_session_state(session_id)
 
-    # 1️⃣ Entity detection
+    #  Entity detection
     detected = extract_entity(user_query)
     if detected:
         state.entity = detected
 
-    # 2️⃣ Pronoun resolution
+    #  Pronoun resolution
     if contains_pronoun(user_query) and state.entity:
         wiki_query = state.entity["text"]
         resolved_query = f"{user_query} (This refers to {wiki_query})"
@@ -123,7 +104,7 @@ def ask_bot(user_query: str, session_id: str = "default") -> dict:
         wiki_query = user_query
         resolved_query = user_query
 
-    # 3️⃣ Wikipedia grounding
+    #  Wikipedia grounding
     wiki_info = ""
     try:
         wiki_info = WikipediaQueryRun(
@@ -132,13 +113,13 @@ def ask_bot(user_query: str, session_id: str = "default") -> dict:
     except Exception:
         pass
 
-    # 4️⃣ Implicit entity promotion
+    # Implicit entity promotion
     if state.entity is None and is_entity_seeking(user_query):
         promoted = promote_entity_from_text(wiki_info)
         if promoted:
             state.entity = promoted
 
-    # 5️⃣ LLM call
+    #   LLM call
     final_input = resolved_query
     if wiki_info:
         final_input += f"\n\nReference:\n{wiki_info}"
