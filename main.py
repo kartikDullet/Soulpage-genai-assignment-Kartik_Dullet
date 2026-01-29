@@ -10,7 +10,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import InMemoryChatMessageHistory
 
 
-MISTRAL_API_KEY = "41XefarZewGcSLzbHEnpsO9lrVeFDf5V"
+MISTRAL_API_KEY = "your_mistral_api_key_here"
 
 nlp = spacy.load("en_core_web_sm")
 
