@@ -1,5 +1,5 @@
 import streamlit as st
-from bot import ask_bot
+from main import ask_bot
 
 st.set_page_config(page_title="Conversational Knowledge Bot", page_icon="🤖")
 st.title("🤖 Conversational Knowledge Bot")
